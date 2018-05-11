@@ -160,8 +160,10 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory, IT
                 requestInfo = helpers.analyzeRequest(content);
                 return requestInfo.getContentType() == IRequestInfo.CONTENT_TYPE_JSON;
             } else {
-                responseInfo = helpers.analyzeResponse(content);
-                return responseInfo.getInferredMimeType().equals("JSON");
+                //responseInfo = helpers.analyzeResponse(content);
+                //return responseInfo.getInferredMimeType().equals("JSON");
+                // TODO: be better
+                return true;
             }
         }
 
@@ -183,11 +185,19 @@ public class BurpExtender implements IBurpExtender, IMessageEditorTabFactory, IT
                     IResponseInfo responseInfo = helpers.analyzeResponse(content);
                     bodyOffset = responseInfo.getBodyOffset();
                 }
+                //
                 //Get only the JSON part of the content
                 byte[] requestResponseBody = Arrays.copyOfRange(content, bodyOffset, content.length);
+
+                // Remove crap.
+                String responseBody = new String(requestResponseBody);
+                if (responseBody.startsWith("for (;;);")) {
+                    responseBody = responseBody.substring(9);
+                }
+
                 try {
                     JsonParser jp = new JsonParser();
-                    JsonElement je = jp.parse(new String(requestResponseBody));
+                    JsonElement je = jp.parse(responseBody);
                     json = gson.toJson(je);
                     txtInput.setText(json.getBytes());
                     txtInput.setEditable(editable);
